@@ -66,7 +66,7 @@ pipeline {
                 }
             }
             post {
-                // Post-processing step for success
+                // Post-processing step for success!!!
                 success {
                     echo 'Checkstyle analysis completed successfully'
                 }
@@ -119,7 +119,6 @@ pipeline {
     }
 
     post {
-        // Post-execution step for success
         success {
             echo 'Minecraft has been successfully deployed!'
         }
