@@ -21,7 +21,7 @@ pipeline {
             steps {
                 // Clone the application code from GitHub
                 echo 'Cloning the application code...'
-                git branch: 'master', url: 'https://github.com/Dappyplay4u/automatedcicd.git'
+                git branch: 'main', url: 'https://github.com/Dappyplay4u/minecraft-deployment.git'
             }
         }
 
@@ -35,28 +35,35 @@ pipeline {
         stage('Build and Test') {
             steps {
                 // Build and test the Maven project
-                sh 'cd minecraft && mvn -U clean package'
+                dir('minecraft') {
+                    sh 'mvn -U clean package'
+                }
             }
         }
 
         stage('Unit Test') {
             steps {
-                // Run unit tests
-                sh 'cd minecraft && mvn test'
+                dir('minecraft') {
+                    sh 'mvn test'
+                }
             }
         }
 
         stage('Integration Test') {
             steps {
                 // Run integration tests
-                sh 'cd minecraft && mvn verify -DskipUnitTests'
+                dir('minecraft') {
+                    sh 'mvn verify -DskipUnitTests'
+                }
             }
         }
 
         stage('Checkstyle Code Analysis') {
             steps {
                 // Perform code style analysis
-                sh 'cd minecraft && mvn checkstyle:checkstyle'
+                dir('minecraft') {
+                    sh 'mvn checkstyle:checkstyle'
+                }
             }
             post {
                 // Post-processing step for success
@@ -70,29 +77,33 @@ pipeline {
             steps {
                 // Run static code analysis with SonarQube
                 withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_AUTH_TOKEN')]) {
-                    sh "cd minecraft && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}"
-                }
-            }
-        }
-
-        stage("Docker Build & Push"){
-            steps{
-                script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
-                       sh " cd minecraft && docker build -t minecraft ."
-                       sh "docker tag minecraft dappyplay4u/minecraft:latest "
-                       sh "docker push dappyplay4u/minecraft:latest "
+                    dir('minecraft/jenkinsfile') {
+                        sh "mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}"
                     }
                 }
             }
         }
 
-        stage('Deploy to container'){
-            steps{
+        stage("Docker Build & Push") {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                        dir('minecraft') {
+                            sh 'docker build -t minecraft .'
+                            sh 'docker tag minecraft dappyplay4u/minecraft:latest'
+                            sh 'docker push dappyplay4u/minecraft:latest'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to container') {
+            steps {
                 sh 'docker run -d -p 8081:80 dappyplay4u/minecraft:latest'
             }
         }
-               
+
         stage('Kubernetes Deploy') {
             steps {
                 withKubeConfig(credentialsId: 'K8S', serverUrl: '') {
@@ -106,7 +117,7 @@ pipeline {
             }
         }
     }
-    
+
     post {
         // Post-execution step for success
         success {
