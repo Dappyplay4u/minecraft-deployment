@@ -104,23 +104,9 @@ pipeline {
             }
         }
 
-        stage('Kubernetes Deploy') {
-            steps {
-                withKubeConfig(credentialsId: 'K8S', serverUrl: '') {
-                    sh "aws eks update-kubeconfig --name ${clusterName} --region ${region}"
-                    dir('minecraft') {
-                        sh 'kubectl apply -f minecraft-deployment-service.yml'
-                        sh 'kubectl apply -f minecraft-namespace.yaml'
-                        sh 'kubectl apply -f minecraft-pv-pvc.yaml'
-                    }
-                }
-            }
-        }
-    }
-
     post {
         success {
-            echo 'Minecraft has been successfully deployed!'
+            echo 'Minecraft has been successfully Containerized!'
         }
     }
 }
