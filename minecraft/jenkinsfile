@@ -77,7 +77,7 @@ pipeline {
             steps {
                 // Run static code analysis with SonarQube
                 withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_AUTH_TOKEN')]) {
-                    dir('minecraft/jenkinsfile') {
+                    dir('minecraft') {
                         sh "mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}"
                     }
                 }
