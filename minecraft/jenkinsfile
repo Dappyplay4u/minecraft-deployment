@@ -108,3 +108,6 @@ pipeline {
     post {
         success {
             echo 'Minecraft has been successfully Containerized!'
+        }
+    }
+}
