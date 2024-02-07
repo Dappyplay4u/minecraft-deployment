@@ -103,10 +103,8 @@ pipeline {
                 sh 'docker run -d -p 8080:8090 dappyplay4u/minecraft:latest'
             }
         }
+    }
 
     post {
         success {
             echo 'Minecraft has been successfully Containerized!'
-        }
-    }
-}
