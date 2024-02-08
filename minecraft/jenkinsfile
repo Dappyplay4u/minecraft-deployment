@@ -6,7 +6,8 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
         SONAR_URL = "http://44.204.109.146:9000/" // URL for SonarQube
-        clusterName = 'minecraft-eks-server'
+        region = 'us-east-1'
+        clusterName = 'minecraft-eks-cluster'
     }
 
     tools {
@@ -103,8 +104,25 @@ pipeline {
                 sh 'docker run -d -p 8085:8090 dappyplay4u/minecraft:latest'
             }
         }
-    }
 
+        stage("Deploy to EKS") {
+            steps {
+                script {
+                    // Replace the image tag in Kubernetes YAML files with the Jenkins build number
+                    sh "sed -i 's/replaceImageTag/${BUILD_NUMBER}/g' minecraft/minecraft-deployment.yaml"
+                    sh "sed -i 's/replaceImageTag/${BUILD_NUMBER}/g' minecraft/minecraft-namespace.yaml"
+                    sh "sed -i 's/replaceImageTag/${BUILD_NUMBER}/g' minecraft/minecraft-pv-pvc.yaml"
+
+                    // Update kubeconfig for the specified Amazon EKS cluster
+                    sh "aws eks update-kubeconfig --name ${clusterName} --region ${region}"
+
+                    // Apply Kubernetes configuration files to deploy the Minecraft application
+                    dir('minecraft') {
+                        sh "kubectl apply -f minecraft-deployment.yaml"
+                        sh "kubectl apply -f minecraft-namespace.yaml"
+                        sh "kubectl apply -f minecraft-pv-pvc.yaml"
+                    }
+                }
     post {
         success {
             echo 'Minecraft has been successfully Containerized!'
