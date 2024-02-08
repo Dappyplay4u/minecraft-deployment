@@ -123,6 +123,10 @@ pipeline {
                         sh "kubectl apply -f minecraft-pv-pvc.yaml"
                     }
                 }
+            }
+        }
+    }
+
     post {
         success {
             echo 'Minecraft has been successfully Containerized!'
